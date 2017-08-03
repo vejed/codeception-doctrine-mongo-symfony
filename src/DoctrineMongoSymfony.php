@@ -113,11 +113,11 @@ EOF;
      *
      * ``` php
      * <?php
-     * $I->persistEntity(new \Entity\User, array('name' => 'Miles'));
+     * $I->persistEntity(\Entity\User::class, array('name' => 'Miles'));
      * $I->persistEntity($user, array('name' => 'Miles'));
      * ```
      *
-     * @param $obj
+     * @param string|object $obj
      * @param array $values
      */
     public function persistEntity($obj, $values = [])
@@ -147,14 +147,14 @@ EOF;
      * $I->haveInRepository('Entity\User', array('name' => 'hlogeon'));
      * ```
      *
-     * @param       $entity
+     * @param       $className
      * @param array $data
      *
      * @return mixed
      */
-    public function haveInRepository($entity, array $data)
+    public function haveInRepository($className, array $data)
     {
-        $reflectedEntity = new \ReflectionClass($entity);
+        $reflectedEntity = new \ReflectionClass($className);
         $entityObject = $reflectedEntity->newInstance();
 
         $this->dm->getHydratorFactory()->hydrate($entityObject, $data);
@@ -164,13 +164,13 @@ EOF;
 
         if (method_exists($entityObject, 'getId')) {
             $id = $entityObject->getId();
-            $this->debug("$entity entity created with id:$id");
+            $this->debug("$className entity created with id:$id");
             return $id;
         }
     }
 
     /**
-     * Flushes changes to database executes a query defined by array.
+     * Flushes changes to database and performs ->findOneBy() call for current repository.
      * It builds query based on array of parameters.
      * You can use entity associations to build complex queries.
      *
@@ -179,31 +179,47 @@ EOF;
      * ``` php
      * <?php
      * $I->seeInRepository('User', array('name' => 'hlogeon'));
-     * $I->seeInRepository('User', array('name' => 'hlogeon', 'Company' => array('name' => 'Codegyre')));
-     * $I->seeInRepository('Client', array('User' => array('Company' => array('name' => 'Codegyre')));
+     * $I->seeInRepository(User::class, array('name' => 'tst', 'permissions.perm' => 'edit'));
      * ?>
      * ```
      *
-     * Fails if record for given criteria can\'t be found,
+     * Fails if record for given criteria can\'t be found.
      *
-     * @param $entity
+     * @param string $className
      * @param array $params
      */
-    public function seeInRepository($entity, $params = [])
+    public function seeInRepository($className, $params = [])
     {
-        $res = $this->dm->getRepository($entity)->findBy($params);
+        $this->flushToDatabase();
+
+        $res = $this->dm->getRepository($className)->findOneBy($params);
         $this->assertNotEmpty($res);
     }
 
     /**
      * Flushes changes to database and performs ->findOneBy() call for current repository.
+     * It builds query based on array of parameters.
+     * You can use entity associations to build complex queries.
      *
-     * @param $entity
+     * Example:
+     *
+     * ``` php
+     * <?php
+     * $I->dontSeeInRepository('User', array('name' => 'hlogeon'));
+     * $I->dontSeeInRepository(User::class, array('name' => 'tst', 'permissions.perm' => 'edit'));
+     * ?>
+     * ```
+     *
+     * Fails if record for given criteria was found.
+     *
+     * @param string $className
      * @param array $params
      */
-    public function dontSeeInRepository($entity, $params = [])
+    public function dontSeeInRepository($className, $params = [])
     {
-        $res = $this->dm->getRepository($entity)->findBy($params);
+        $this->flushToDatabase();
+
+        $res = $this->dm->getRepository($className)->findOneBy($params);
         $this->assertEmpty($res);
     }
 
@@ -221,14 +237,14 @@ EOF;
      * ```
      *
      * @version 1.1
-     * @param $entity
+     * @param string $className
      * @param $field
      * @param array $params
      * @return mixed
      */
-    public function grabFromRepository($entity, $field, $params = [])
+    public function grabFromRepository($className, $field, $params = [])
     {
-        return ReflectionHelper::readPrivateProperty($this->grabEntityFromRepository($entity, $params), $field);
+        return ReflectionHelper::readPrivateProperty($this->grabEntityFromRepository($className, $params), $field);
     }
 
     /**
@@ -240,21 +256,21 @@ EOF;
      *
      * ``` php
      * <?php
-     * $users = $I->grabEntitiesFromRepository('AppBundle:User', array('name' => 'davert'));
+     * $users = $I->grabEntitiesFromRepository('AppBundle:User', array('name' => 'tst'));
      * ?>
      * ```
      *
      * @version 1.1
-     * @param $entity
+     * @param string $className
      * @param array $params
      * @return array
      */
-    public function grabEntitiesFromRepository($entity, $params = [])
+    public function grabEntitiesFromRepository($className, $params = [])
     {
         // we need to store to database...
         $this->dm->flush();
 
-        return $this->dm->getRepository($entity)->findBy($params);
+        return $this->dm->getRepository($className)->findBy($params);
     }
 
     /**
@@ -271,16 +287,16 @@ EOF;
      * ```
      *
      * @version 1.1
-     * @param $entity
+     * @param string $className
      * @param array $params
      * @return object
      */
-    public function grabEntityFromRepository($entity, $params = [])
+    public function grabEntityFromRepository($className, $params = [])
     {
         // we need to store to database...
         $this->dm->flush();
 
-        return $this->dm->getRepository($entity)->findOneBy($params);
+        return $this->dm->getRepository($className)->findOneBy($params);
     }
 
     /**
@@ -292,17 +308,17 @@ EOF;
      *
      * ``` php
      * <?php
-     * $I->removeEntity('User', ['_id' => '123']);
+     * $I->removeEntity(User::class, ['_id' => '123']);
      * ?>
      * ```
      *
      * @version 1.1
-     * @param $entity
+     * @param string $className
      * @param array $params
      */
-    public function removeEntity($entity, $params)
+    public function removeEntity($className, $params)
     {
-        $res = $this->dm->getRepository($entity)->findBy($params);
+        $res = $this->dm->getRepository($className)->findBy($params);
 
         foreach ($res as $r) {
             $this->dm->remove($r);
@@ -313,7 +329,7 @@ EOF;
     /**
      * Drops collection
      *
-     * @param $className
+     * @param string $className
      */
     public function dropCollection($className)
     {

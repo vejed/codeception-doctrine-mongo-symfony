@@ -23,14 +23,76 @@ Allows integration with Codeception for projects with Doctrine MongoDB ODM for S
 ### dontSeeInRepository
  
 Flushes changes to database and performs ->findOneBy() call for current repository.
+Fails if record for given criteria was found.
 
- * `param` $entity
+Example:
+
+``` php
+<?php
+$I->dontSeeInRepository('User', array('name' => 'hlogeon'));
+$I->dontSeeInRepository(User::class, array('name' => 'tst', 'permissions.perm' => 'edit'));
+?>
+```
+
+ * `param string` $className
  * `param array` $params
+
+
+### dropCollection
+ 
+Drops collection
+
+ * `param string` $className
 
 
 ### flushToDatabase
  
 Performs $dm->flush();
+
+
+### getDocumentManager
+ 
+Returns DocumentManager object
+
+
+### grabEntitiesFromRepository
+ 
+Selects entities from repository.
+It builds query based on array of parameters.
+You can use entity associations to build complex queries.
+
+Example:
+
+``` php
+<?php
+$users = $I->grabEntitiesFromRepository('AppBundle:User', array('name' => 'tst'));
+?>
+```
+
+ * `param` $className
+ * `param` $field
+ * `param array` $params
+ * `return` array
+
+
+### grabEntityFromRepository
+ 
+Selects a single entity from repository.
+It builds query based on array of parameters.
+You can use entity associations to build complex queries.
+
+Example:
+
+``` php
+<?php
+$user = $I->grabEntityFromRepository('AppBundle:User', array('id' => '1234'));
+?>
+```
+
+ * `param` $className
+ * `param` $field
+ * `param array` $params
+ * `return` array
 
 
 ### grabFromRepository
@@ -43,12 +105,12 @@ Example:
 
 ``` php
 <?php
-$email = $I->grabFromRepository('User', 'email', array('name' => 'davert'));
+$email = $I->grabFromRepository('AppBundle:User', 'email', array('name' => 'davert'));
 ?>
 ```
 
- * `param` $entity
- * `param` $field
+ * `param string` $className
+ * `param string` $field
  * `param array` $params
  * `return` array
 
@@ -64,6 +126,9 @@ Returns id using `getId` of newly created entity.
 $I->haveInRepository('Entity\User', array('name' => 'davert'));
 ```
 
+ * `param string` $className
+ * `param array` $data
+
 
 ### persistEntity
  
@@ -73,17 +138,17 @@ Example:
 
 ``` php
 <?php
-$I->persistEntity(new \Entity\User, array('name' => 'Miles'));
+$I->persistEntity(\Entity\User::class, array('name' => 'Miles'));
 $I->persistEntity($user, array('name' => 'Miles'));
 ```
 
- * `param` $obj
+ * `param string|object` $obj
  * `param array` $values
 
 
-### seeInRepository
+### removeEntity
  
-Flushes changes to database executes a query defined by array.
+Deletes entity by its id
 It builds query based on array of parameters.
 You can use entity associations to build complex queries.
 
@@ -91,13 +156,26 @@ Example:
 
 ``` php
 <?php
-$I->seeInRepository('User', array('name' => 'davert'));
-$I->seeInRepository('User', array('name' => 'davert', 'Company' => array('name' => 'Codegyre')));
-$I->seeInRepository('Client', array('User' => array('Company' => array('name' => 'Codegyre')));
+$I->removeEntity(User::class, ['_id' => '123']);
+```
+
+ * `param string` $className
+ * `param array` $params
+
+
+### seeInRepository
+ 
+Flushes changes to database and performs ->findOneBy() call for current repository.
+Fails if record for given criteria can't found.
+
+Example:
+
+``` php
+<?php
+$I->seeInRepository('User', array('name' => 'hlogeon'));
+$I->seeInRepository(User::class, array('name' => 'tst', 'permissions.perm' => 'edit'));
 ?>
 ```
 
-Fails if record for given criteria can\'t be found,
-
- * `param` $entity
+ * `param string` $className
  * `param array` $params

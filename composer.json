@@ -1,0 +1,22 @@
+{
+    "name": "vejed/codeception-doctrine-mongo-symfony",
+    "description": "Module provides Codeception integration with Doctrine MongoDB ODM for Symfony 2 projects",
+    "authors": [
+        {
+            "name": "Vejed",
+            "email": "vejed@vejed.net.ru"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0 <8.0",
+        "codeception/codeception": "^2.3",
+        "doctrine/mongodb-odm": "^1.1",
+        "symfony/symfony": "^2.7"
+    },
+    "minimum-stability": "alpha",
+    "autoload": {
+        "psr-4": {
+            "Codeception\\Module\\": "src"
+        }
+    }
+}
